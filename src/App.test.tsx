@@ -19,4 +19,16 @@ describe('Guitar Chord Player', () => {
     expect(screen.getByRole('button', { name: '업 스트로크 재생' })).toBeEnabled()
     expect([...container.querySelectorAll('.string-number')].map((label) => label.textContent)).toEqual(['1', '2', '3', '4', '5', '6'])
   })
+
+  it('switches enharmonic roots without changing pitch and navigates voicings', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Bb' }))
+    expect(screen.getByRole('heading', { name: 'Bb' })).toBeInTheDocument()
+    expect(screen.getByText('Bb · D · F')).toBeInTheDocument()
+    expect(screen.getByText('A Shape')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '♯Sharp' }))
+    expect(screen.getByRole('heading', { name: 'A#' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '다음 운지' }))
+    expect(screen.getByText('E Shape')).toBeInTheDocument()
+  })
 })

@@ -1,29 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Header } from './components/Header'
 import { RootSelector } from './components/RootSelector'
+import { AccidentalSelector } from './components/AccidentalSelector'
 import { ChordTypeSelector } from './components/ChordTypeSelector'
 import { ChordHeader } from './components/ChordHeader'
+import { VoicingSelector } from './components/VoicingSelector'
 import { AudioControls } from './components/AudioControls'
 import { GuitarFretboard } from './components/GuitarFretboard'
 import { ChordInfo } from './components/ChordInfo'
 import { Legend } from './components/Legend'
-import { chords } from './data/chords'
 import { SynthAudioEngine } from './audio/SynthAudioEngine'
 import type { StrokeDirection } from './audio/AudioEngine'
-import type { ChordType, NoteName, SoundingNote } from './types/chord'
-import { getChord } from './utils/chordUtils'
-import { getChordSoundingNotes } from './utils/musicTheory'
+import type { ChordQuality } from './types/chord'
+import type { AccidentalPreference, PitchClass, SoundingNote } from './types/music'
+import { generateChord } from './music/chordGenerator'
+import { pitchClassToNoteName } from './music/pitchClass'
+import { getSoundingNotes } from './utils/midi'
 import './styles/globals.css'
 
 export default function App() {
-  const [root, setRoot] = useState<NoteName>('C')
-  const [type, setType] = useState<ChordType>('major')
+  const [root, setRoot] = useState<PitchClass>(0)
+  const [quality, setQuality] = useState<ChordQuality>('major')
+  const [preference, setPreference] = useState<AccidentalPreference>('auto')
+  const [voicingIndex, setVoicingIndex] = useState(0)
   const [activeString, setActiveString] = useState<number | null>(null)
   const engine = useRef(new SynthAudioEngine())
-  const chord = useMemo(() => getChord(chords, root, type), [root, type])
-  const notes = useMemo(() => getChordSoundingNotes(chord), [chord])
+  const voicings = useMemo(() => generateChord(root, quality, preference), [root, quality, preference])
+  const chord = voicings[voicingIndex] ?? voicings[0]
+  const notes = useMemo(() => getSoundingNotes(chord, preference), [chord, preference])
+  const displayRoot = pitchClassToNoteName(root, preference)
 
   useEffect(() => () => engine.current.stopAll(), [])
+  useEffect(() => setVoicingIndex(0), [root, quality])
   const flash = (stringNumber: number) => {
     setActiveString(stringNumber)
     window.setTimeout(() => setActiveString((current) => current === stringNumber ? null : current), 190)
@@ -36,11 +44,13 @@ export default function App() {
       <div className="app-shell">
         <Header />
         <div className="selection-panel">
-          <RootSelector value={root} onChange={setRoot} />
-          <ChordTypeSelector root={root} value={type} onChange={setType} />
+          <AccidentalSelector value={preference} onChange={setPreference} />
+          <RootSelector value={root} preference={preference} onChange={setRoot} />
+          <ChordTypeSelector root={displayRoot} value={quality} onChange={setQuality} />
         </div>
         <section className="player-card" aria-live="polite">
           <ChordHeader chord={chord} />
+          <VoicingSelector voicings={voicings} index={voicingIndex} onChange={setVoicingIndex} />
           <AudioControls onPlay={playChord} />
           <GuitarFretboard chord={chord} notes={notes} activeString={activeString} onPlayString={playString} />
           <Legend />

@@ -1,8 +1,8 @@
-export const ROOT_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
-export type NoteName = (typeof ROOT_NOTES)[number]
+import type { PitchClass } from './music'
 
-export const CHORD_TYPES = ['major', 'minor', '7', 'maj7', 'm7'] as const
-export type ChordType = (typeof CHORD_TYPES)[number]
+export const CHORD_QUALITIES = ['major', 'minor', '7', 'maj7', 'm7'] as const
+export type ChordQuality = (typeof CHORD_QUALITIES)[number]
+export type ShapeFamily = 'open' | 'e-shape' | 'a-shape' | 'other'
 
 export interface Barre {
   fret: number
@@ -11,21 +11,34 @@ export interface Barre {
   finger: number
 }
 
-export interface GuitarChord {
+export interface ChordShape {
   id: string
-  root: NoteName
-  type: ChordType
-  symbol: string
   name: string
+  family: ShapeFamily
+  quality: ChordQuality
+  baseRoot: PitchClass
   frets: number[]
   fingers: number[]
+  movable: boolean
+  rootString: number
   barre?: Barre | null
+  commonness?: number
 }
 
-export interface SoundingNote {
-  stringNumber: number
-  fret: number
-  midi: number
+export interface GuitarVoicing {
+  id: string
+  root: PitchClass
+  quality: ChordQuality
+  displayRoot: string
+  symbol: string
   name: string
-  frequency: number
+  shapeId: string
+  shapeName: string
+  family: ShapeFamily
+  frets: number[]
+  fingers: number[]
+  barre: Barre | null
+  startFret: number
+  displayFrets: number
+  score: number
 }

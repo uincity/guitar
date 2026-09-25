@@ -1,4 +1,4 @@
-import type { SoundingNote } from '../types/chord'
+import type { SoundingNote } from '../types/music'
 import type { AudioEngine, StrokeDirection } from './AudioEngine'
 
 export class SynthAudioEngine implements AudioEngine {

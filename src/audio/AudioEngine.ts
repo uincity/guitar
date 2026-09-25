@@ -1,4 +1,4 @@
-import type { SoundingNote } from '../types/chord'
+import type { SoundingNote } from '../types/music'
 
 export type StrokeDirection = 'down' | 'up'
 

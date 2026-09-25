@@ -1,19 +1,35 @@
 # Guitar Chord Player
 
-GitHub Pages에서 서버 없이 실행되는 모바일 친화적 기타 코드 학습 도구입니다. 코드를 선택해 SVG 운지를 확인하고, 각 현 또는 전체 스트로크를 Web Audio API로 들어볼 수 있습니다.
+12음계, 이명동음, Open Chord와 이동형 E/A Shape를 결합해 운지를 자동 생성하는 모바일 친화적 기타 코드 플레이어입니다. GitHub Pages에서 별도 서버 없이 실행됩니다.
 
 ## Features
 
-- C–B의 7개 루트와 Major, Minor, 7, Maj7, m7 조합 35개
-- 반응형 SVG 지판, 손가락 번호, 바레, 개방현/뮤트 표시
-- 표준 튜닝과 프렛으로 실제 음 이름·옥타브·주파수 자동 계산
-- 개별 현, Down/Up 스트로크 재생과 재생 중 현 애니메이션
-- 키보드 접근성, 다크 모드, 모바일 터치 대응
-- 별도 서버·DB·API 키가 필요 없는 완전한 정적 앱
+- C부터 B까지 12개 Pitch Class
+- Auto, Flat, Sharp 음이름 표시 전환
+- Major, Minor, 7, Maj7, m7 코드
+- 21개 Open Chord와 10개 재사용 가능한 Movable Shape
+- E/A Shape 전조, 뮤트 현 보존과 바레 자동 생성
+- Open Chord와 낮은 프렛을 우선하는 Voicing 점수화
+- 코드마다 여러 Voicing 탐색
+- 음계 문자 역할을 고려한 Enharmonic Spelling
+- 고음역 코드에 맞춰 이동하는 SVG 프렛 창
+- MIDI 기반 실제 연주음과 주파수 계산
+- 개별 현, Down/Up 스트로크 Web Audio 재생
+- 모바일 레이아웃, 키보드 접근성, 다크 모드
 
-## Tech Stack
+## Architecture
 
-React, TypeScript, Vite, SVG, Web Audio API, Vitest, React Testing Library
+코드 이름, 실제 Pitch Class, 기타 운지는 서로 분리됩니다.
+
+```text
+Pitch Class / Chord Formula     Open / E / A Shapes
+              \                    /
+               Chord & Voicing Generator
+                    /     |      \
+                  SVG   Audio   Info Panel
+```
+
+`src/music/`은 표기와 운지 생성만 담당하며 React나 SVG를 참조하지 않습니다. `src/audio/`도 UI와 독립된 인터페이스로 구성되어 있습니다.
 
 ## Installation
 
@@ -29,7 +45,7 @@ npm run build
 npm run preview
 ```
 
-`vite.config.ts`의 `base: './'` 설정으로 GitHub Pages의 프로젝트 하위 경로에서도 에셋을 불러옵니다.
+`vite.config.ts`의 상대 `base` 설정으로 GitHub Pages 프로젝트 하위 경로에서도 에셋을 정상적으로 불러옵니다.
 
 ## Test
 
@@ -38,36 +54,84 @@ npm run test
 npm run test:run
 ```
 
-## GitHub Pages Deployment
+Pitch Class alias, MIDI, Enharmonic Spelling, E/A Shape 전조, 바레 생성, Voicing 우선순위, 실제 연주음과 UI 전환을 검증합니다.
 
-저장소의 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 설정하세요. `main` 브랜치에 push하면 `.github/workflows/deploy.yml`이 테스트와 빌드를 수행한 뒤 자동 배포합니다.
+## 12 Chromatic Roots and Enharmonic Notes
 
-수동 배포가 필요하면 `npm run build` 후 생성되는 `dist/` 폴더를 정적 호스팅에 올리면 됩니다.
+내부에서는 음을 0~11 Pitch Class로 저장합니다. 따라서 `C#`와 `Db`는 같은 값 `1`이며 실제 MIDI와 운지도 같습니다. 화면 표기만 사용자의 Auto/Flat/Sharp 설정에 따라 바뀝니다.
 
-## Chord Data Structure
+예를 들어 동일한 `244322` 운지는 다음처럼 표시됩니다.
 
-모든 코드는 `src/data/chords.ts`에 있으며 배열은 `[6번 줄, 5번 줄, 4번 줄, 3번 줄, 2번 줄, 1번 줄]` 순서입니다. `-1`은 뮤트, `0`은 개방현, 양수는 프렛입니다. `fingers`는 `0`(손가락 없음)부터 `4`(소지)까지 사용합니다.
+- Flat: `Gb Major` — `Gb · Bb · Db`
+- Sharp: `F# Major` — `F# · A# · C#`
 
-## Adding New Chords
+## Open Chords
 
-`src/types/chord.ts`의 `NoteName`/`ChordType`을 확장하고 `src/data/chords.ts`의 `shapes`에 6개 frets와 fingers 값을 추가하세요. 개발 시 데이터 검증기가 잘못된 길이와 범위를 즉시 알려줍니다.
+`src/data/openChords.ts`에는 이동하지 않는 일반적인 Open Voicing 21개가 등록되어 있습니다. Open Chord가 존재하면 기본 Voicing으로 우선 선택됩니다. Open C의 `X32010`을 Db로 단순 이동시키지 않습니다.
 
-## Adding Guitar Samples
+## Movable Shapes and Barre Chords
 
-현재는 `SynthAudioEngine`이 Web Audio API로 소리를 합성합니다. 실제 샘플을 사용하려면 라이선스가 명확한 파일을 `public/audio/guitar/`에 두고 `SampleAudioEngine`에서 필요할 때만 불러오세요. 파일이 없거나 로드에 실패할 때는 `SynthAudioEngine`으로 fallback하도록 설계되어 있습니다.
+`src/data/chordShapes.ts`에는 각 Quality별 E Shape와 A Shape가 있습니다. Shape의 `baseRoot`와 목표 Pitch Class 차이로 모든 프렛을 이동합니다. 이때 `-1`은 항상 뮤트로 남고, 0프렛은 이동 후 바레 프렛이 됩니다.
+
+예시:
+
+```text
+E Major  0 2 2 1 0 0
+F Major  1 3 3 2 1 1
+Ab Major 4 6 6 5 4 4
+
+A Major  X 0 2 2 2 0
+Bb Major X 1 3 3 3 1
+Db Major X 4 6 6 6 4
+```
+
+## Adding a New Shape
+
+`src/data/chordShapes.ts`에 `ChordShape` 객체를 추가합니다.
+
+```ts
+{
+  id: 'e-sus4',
+  name: 'E Shape',
+  family: 'e-shape',
+  quality: 'sus4',
+  baseRoot: 4,
+  rootString: 6,
+  frets: [0, 2, 2, 2, 0, 0],
+  fingers: [0, 2, 3, 4, 0, 0],
+  movable: true,
+}
+```
+
+새 Quality라면 `src/types/chord.ts`의 타입과 `src/data/chordFormulas.ts`의 interval/degrees/suffix도 함께 추가합니다. 개별 루트마다 운지를 복제할 필요는 없습니다.
+
+## Audio Playback
+
+샘플 없이도 `SynthAudioEngine`이 Web Audio API로 동작합니다. 실제 기타 샘플을 추가하려면 라이선스가 명확한 파일을 `public/audio/guitar/`에 두고 `SampleAudioEngine`에서 필요할 때 불러오세요. 샘플 로드 실패 시 Synth로 fallback할 수 있는 구조입니다.
+
+## GitHub Pages
+
+저장소의 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 지정하세요. `main` 브랜치에 push하면 `.github/workflows/deploy.yml`이 다음 과정을 실행합니다.
+
+```text
+npm ci
+npm run test:run
+npm run build
+deploy
+```
 
 ## Project Structure
 
 ```text
 src/
-  audio/       AudioEngine 인터페이스와 합성/샘플 엔진
-  components/  선택기, SVG 지판, 컨트롤, 정보 패널
-  data/        35개 코드 데이터
-  styles/      전역 반응형 스타일과 테마
-  types/       코드와 음 타입
-  utils/       음악 이론 계산과 데이터 검증
+  audio/       오디오 인터페이스와 Synth/Sample 엔진
+  components/  선택기, Voicing, SVG 지판, 정보 패널
+  data/        공식, Open Chord, Movable Shape, 튜닝
+  music/       Pitch Class, Spelling, 전조, 생성과 점수화
+  types/       음악 및 코드 모델
+  utils/       MIDI와 실제 연주음 계산
 ```
 
-## Phase 2 Ideas
+## Phase 2
 
-Capo, 대체 보이싱, 왼손 모드, 아르페지오/BPM, 코드 진행, 스트러밍 패턴, 즐겨찾기, PWA, 샵/플랫 코드, 커스텀 튜닝과 우쿨렐레 지원을 현재 데이터·오디오 계층 위에 확장할 수 있습니다.
+Capo, 추가 코드 Quality, CAGED 대체 Shape, 코드 진행, BPM/스트러밍 패턴, 아르페지오, 커스텀 튜닝, Drop D/DADGAD, 우쿨렐레, 왼손 모드, PWA와 즐겨찾기를 현재 엔진 위에 확장할 수 있습니다.
