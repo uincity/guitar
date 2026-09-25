@@ -31,4 +31,17 @@ describe('Guitar Chord Player', () => {
     fireEvent.click(screen.getByRole('button', { name: '다음 운지' }))
     expect(screen.getByText('E Shape')).toBeInTheDocument()
   })
+
+  it('opens CAGED learning, changes Shape, and displays the full fretboard', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'CAGED' }))
+    expect(screen.getByText('CAGED LEARNING')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'C Major' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /A3–5F/ }))
+    expect(screen.getByRole('heading', { name: 'C Major — A Shape' })).toBeInTheDocument()
+    expect(screen.getByText('X · 3 · 5 · 5 · 5 · 3')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '전체 지판' }))
+    expect(screen.getByLabelText('0에서 15프렛 CAGED 전체 지판')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'C Shape 듣기' })).toBeEnabled()
+  })
 })

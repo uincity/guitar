@@ -16,9 +16,12 @@ export const fretToMidi = (stringIndex: number, fret: number, capo = 0) => {
   return STANDARD_TUNING[stringIndex] + fret + capo
 }
 
-export const getSoundingNotes = (voicing: GuitarVoicing, preference: AccidentalPreference = 'auto', capo = 0): SoundingNote[] =>
-  voicing.frets.flatMap((fret, stringIndex) => {
+export const getSoundingNotesFromFrets = (frets: number[], preference: AccidentalPreference = 'auto', capo = 0): SoundingNote[] =>
+  frets.flatMap((fret, stringIndex) => {
     if (fret < 0) return []
     const midi = fretToMidi(stringIndex, fret, capo)
     return [{ stringNumber: 6 - stringIndex, fret, midi, name: midiToNoteName(midi, preference), frequency: midiToFrequency(midi) }]
   })
+
+export const getSoundingNotes = (voicing: Pick<GuitarVoicing, 'frets'>, preference: AccidentalPreference = 'auto', capo = 0) =>
+  getSoundingNotesFromFrets(voicing.frets, preference, capo)
