@@ -1,0 +1,22 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+import App from './App'
+
+describe('Guitar Chord Player', () => {
+  it('starts with C major and changes root and type', () => {
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'C' })).toBeInTheDocument()
+    expect(screen.getByText('X · 3 · 2 · 0 · 1 · 0')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'A' }))
+    fireEvent.click(screen.getByRole('button', { name: /AmMinor/ }))
+    expect(screen.getByRole('heading', { name: 'Am' })).toBeInTheDocument()
+    expect(screen.getByText('X · 0 · 2 · 2 · 1 · 0')).toBeInTheDocument()
+  })
+
+  it('provides accessible playback controls', () => {
+    const { container } = render(<App />)
+    expect(screen.getByRole('button', { name: '코드 재생' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '다운 스트로크 재생' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '업 스트로크 재생' })).toBeEnabled()
+    expect([...container.querySelectorAll('.string-number')].map((label) => label.textContent)).toEqual(['1', '2', '3', '4', '5', '6'])
+  })
+})

@@ -1,0 +1,9 @@
+import type { SoundingNote } from '../types/chord'
+
+export type StrokeDirection = 'down' | 'up'
+
+export interface AudioEngine {
+  playNote(note: SoundingNote): Promise<void>
+  playChord(notes: SoundingNote[], direction?: StrokeDirection, onString?: (stringNumber: number) => void): Promise<void>
+  stopAll(): void
+}
