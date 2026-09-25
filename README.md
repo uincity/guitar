@@ -195,6 +195,28 @@ npm run build
 deploy
 ```
 
+## Real Guitar Audio
+
+연주는 FreePats의 Spanish Classical Guitar WAV 샘플을 우선 사용합니다. 개별 줄, Down/Up Stroke 및 CAGED 보이싱은 모두 실제 sounding MIDI를 같은 `SampleAudioEngine`에 전달합니다. SFZ의 key range와 root pitch를 기준으로 샘플을 선택하고, 필요한 경우 `AudioBufferSourceNode.playbackRate`로 음정을 조절합니다.
+
+샘플은 첫 사용자 재생 동작 이후 필요한 음만 지연 로딩하고, 같은 WAV의 fetch/decode 결과는 Promise cache로 재사용합니다. 샘플 매핑 또는 로딩이 실패한 음만 기존 `SynthAudioEngine`으로 fallback합니다.
+
+## Local Sample Source
+
+개발 PC의 샘플 원본 위치는 `D:\40.Counsel\guitar\src\audio\nylon-guitar`입니다. 이 절대 경로는 브라우저 코드에서 사용하지 않으며, 런타임에는 repository-relative URL만 사용합니다.
+
+SFZ에서 sample manifest를 다시 만들려면 다음 명령을 실행합니다.
+
+```bash
+npm run audio:build-map
+```
+
+`npm run build`도 `prebuild` 단계에서 manifest를 자동으로 갱신하고, 48개 WAV를 `dist/assets/nylon-guitar/`에 포함합니다. 일부 원본 파일명의 `#` 문자가 Vite 및 일부 정적 서버에서 URL fragment로 해석되므로 개발 서버에서는 제한된 sample middleware를 사용하고, 빌드 산출물에서만 `#`를 `-sharp-`로 바꾼 URL-safe 이름을 사용합니다. `src/audio/nylon-guitar`의 원본 파일명과 SFZ 참조는 변경하지 않습니다. 이 방식은 상대 `base`를 사용해 GitHub Pages의 `/guitar/` 하위 경로에서도 동작합니다.
+
+## Third-party License
+
+FreePats Spanish Classical Guitar 2019-06-18은 Creative Commons CC0 1.0 Universal public-domain dedication으로 배포됩니다. 출처와 보존된 원문 라이선스는 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md), `src/audio/nylon-guitar/readme.txt`, `src/audio/nylon-guitar/cc0.txt`에서 확인할 수 있습니다.
+
 ## Project Structure
 
 ```text

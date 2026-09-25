@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "audio:build-map": "node scripts/build-guitar-sample-map.mjs",
+    "prebuild": "npm run audio:build-map",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest",
@@ -12,16 +14,17 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest"
+    "typescript": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
     "@testing-library/user-event": "latest",
+    "@types/node": "^26.6.2",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "jsdom": "latest",

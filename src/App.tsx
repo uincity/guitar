@@ -10,7 +10,7 @@ import { GuitarFretboard } from './components/GuitarFretboard'
 import { ChordInfo } from './components/ChordInfo'
 import { Legend } from './components/Legend'
 import { CagedView } from './components/caged/CagedView'
-import { SynthAudioEngine } from './audio/SynthAudioEngine'
+import { SampleAudioEngine } from './audio/SampleAudioEngine'
 import type { StrokeDirection } from './audio/AudioEngine'
 import type { ChordQuality } from './types/chord'
 import type { AccidentalPreference, PitchClass, SoundingNote } from './types/music'
@@ -26,13 +26,14 @@ export default function App() {
   const [voicingIndex, setVoicingIndex] = useState(0)
   const [viewMode, setViewMode] = useState<'chord' | 'caged'>('chord')
   const [activeString, setActiveString] = useState<number | null>(null)
-  const engine = useRef(new SynthAudioEngine())
+  const engine = useRef(new SampleAudioEngine())
   const voicings = useMemo(() => generateChord(root, quality, preference), [root, quality, preference])
   const chord = voicings[voicingIndex] ?? voicings[0]
   const notes = useMemo(() => getSoundingNotes(chord, preference), [chord, preference])
   const displayRoot = pitchClassToNoteName(root, preference)
 
   useEffect(() => () => engine.current.stopAll(), [])
+  useEffect(() => { void engine.current.preloadNotes(notes) }, [notes])
   useEffect(() => setVoicingIndex(0), [root, quality])
   const flash = (stringNumber: number) => {
     setActiveString(stringNumber)

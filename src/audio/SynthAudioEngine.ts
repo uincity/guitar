@@ -1,21 +1,23 @@
 import type { SoundingNote } from '../types/music'
 import type { AudioEngine, StrokeDirection } from './AudioEngine'
+import { resumeSharedAudioContext } from './audioContext'
 
 export class SynthAudioEngine implements AudioEngine {
-  private context: AudioContext | null = null
   private output: GainNode | null = null
   private active = new Set<OscillatorNode>()
 
   private async ready() {
-    if (!this.context) {
-      this.context = new AudioContext()
-      this.output = this.context.createGain()
+    const context = await resumeSharedAudioContext()
+    if (!this.output) {
+      this.output = context.createGain()
       this.output.gain.value = 0.55
-      this.output.connect(this.context.destination)
+      this.output.connect(context.destination)
     }
-    if (this.context.state === 'suspended') await this.context.resume()
-    return this.context
+    return context
   }
+
+  async resume() { await this.ready() }
+  async preloadNotes(_notes: SoundingNote[]) { /* Synth requires no assets. */ }
 
   async playNote(note: SoundingNote) {
     const context = await this.ready()
